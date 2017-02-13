@@ -1,4 +1,4 @@
-var paper;
+var mypaper;
 
 var paths = {};
 var path = [];
@@ -13,9 +13,12 @@ var selectedColor = "";
 
 var noneIdentified = true;
 
+var curFilename = "leaf.jpg";
+
 		
 $( function() {
-	initRaphael("leaf.jpg");
+	
+	initRaphael(curFilename);
 
 	$( "#idList, #opList" ).sortable({
 	  connectWith: ".connectedSortable"
@@ -61,43 +64,43 @@ $( function() {
 		}
 	});
 	
-	$('img').on('dragstart', function(event) { event.preventDefault(); });
-	
 	$("#canvas").bind("mousedown", function(e){
-		fixWhich(e);
+		//fixWhich(e);
+		mouseDown = true;
+		
 		var parentOffset = $(this).parent().offset(); 
-		//or $(this).offset(); if you really just want the current element's offset
 		var X = e.pageX - parentOffset.left;
 		var Y = e.pageY - parentOffset.top;
 		
 		path.push(['M', X, Y]);
-		paper.path(path).attr({stroke: selectedColor, 'stroke-width':6});
+		mypaper.path(path).attr({stroke: selectedColor, 'stroke-width':6});
 	});
 	
 	$("#canvas").bind("mousemove", function(e){
-		fixWhich(e);
+		//fixWhich(e);
 		var parentOffset = $(this).parent().offset(); 
-		//or $(this).offset(); if you really just want the current element's offset
 		var X = e.pageX - parentOffset.left;
 		var Y = e.pageY - parentOffset.top;
-	
-		if(e.which == 1) {
-			paper.top.remove();
+		
+		if(mouseDown) {
+			mypaper.top.remove();
 			path.push(['L', X, Y]);
-			paper.path(path).attr({stroke: selectedColor, 'stroke-width': 6});
+			mypaper.path(path).attr({stroke: selectedColor, 'stroke-width': 6});
 		}
 	});
 	
 	$("#canvas").bind("mouseup", function(e){
 		path.push(['Z']);
-		paper.top.remove();
+		mypaper.top.remove();
+		
+		mouseDown = false;
 		
 		var obj;
 		if(fill){
-			obj = paper.path(path).attr({stroke: selectedColor, 'stroke-width':6, fill: selectedColor});
+			obj = mypaper.path(path).attr({stroke: selectedColor, 'stroke-width':6, fill: selectedColor});
 		}
 		else {
-			obj = paper.path(path).attr({stroke: selectedColor, 'stroke-width':6 });
+			obj = mypaper.path(path).attr({stroke: selectedColor, 'stroke-width':6 });
 		}
 		
 		if(!paths[selected]){
@@ -148,12 +151,16 @@ $( function() {
 	});
 	
 	$("#clear").click(function() {
-		paper.clear();
+		mypaper.clear();
 		paths = {};
 		pathStack = [];
+		
+		initRaphael(curFilename);
 	});
 	
 	$("#clearSelected").click(function() {
+		if(selected.length <= 0)
+			return;
 		var selectedShapePaths = paths[selected];
 		for(var i=0; i<selectedShapePaths.length; i++){
 			selectedShapePaths[i].pathObj.remove();
@@ -163,8 +170,8 @@ $( function() {
 	});
 	
 	$("#undo").click(function() {
-		if(paper.top) {
-			paper.top.remove();
+		if(mypaper.top && pathStack.length > 0) {
+			mypaper.top.remove();
 			var lastId = pathStack[pathStack.length - 1];
 			var customPathObjArray = paths[lastId];
 			customPathObjArray.splice(customPathObjArray.length - 1, 1);
@@ -175,25 +182,29 @@ $( function() {
 	$("#save").click(function() {
 		var mycanvas = document.getElementById("outputCanvas");
 		var mycontext = mycanvas.getContext('2d');
-		var svg = paper.toSVG();
+		var svg = mypaper.toSVG();
 		canvg(mycanvas, svg, { ignoreClear: true } );
 		
 		setTimeout(function() {
 			//fetch the dataURL from the canvas and set it as src on a link, 
 			// then force click it to download
 			
-			/*var dataURL = document.getElementById('outputCanvas').toDataURL("image/png");
+			var dataURL = document.getElementById('outputCanvas').toDataURL("image/png");
 			var a = $("<a>")
 				.attr("href", dataURL)
-				.attr("download", "img.png");
+				.attr("id", "imgLink")
+				.attr("download", "output-" + curFilename + ".png");
 
-			a[0].click();*/
-			
+			a[0].click();
+			a.append($("<span>If you're image did not download, click here</span>"));
+			$("#header").append(a[0]);
+			a.click(function(){
+				a.remove();
+			});
 		}, 100);
 		
 		createAndDownloadJSON();
 	});
-	
 });
 
 function clearFromPathStack(){
@@ -235,22 +246,25 @@ function addToIdList(id){
 	clone.appendTo("#idList");
 }
 
-function fixWhich(e){
-	if(!e.which && e.button) {
-		if (e.button & 1) e.which = 1      // Left
-		else if(e.button & 4) e.which = 2 // middle
-		else if(e.button & 2) e.which = 3 // right
-	}
-}
-
 function initRaphael(filename) {
-	if(!paper){
-		paper = Raphael("canvas", 500,500);
+	if(typeof mypaper == 'undefined'){
+		mypaper = Raphael("canvas", 500,500);
 	}
 	else {
-		paper.clear();
+		mypaper.clear();
 	}
-	paper.image(filename, 0, 0, 500, 500);
+	mypaper.image(filename, 0, 0, 500, 500);
+	
+	$('img').on('dragstart', function(event) { event.preventDefault(); });
+	$(document).on("dragstart", function(e) {
+		var nodeName = e.target.nodeName.toUpperCase();
+		if (nodeName == "IMG" || nodeName == "SVG" || nodeName == "IMAGE") {
+			if(e.preventDefault){
+				e.preventDefault();
+			}
+			return false;
+		}
+	});
 }
 
 //TODO sort by order in ID list
@@ -270,7 +284,7 @@ function createAndDownloadJSON(){
 	
 	var pom = document.createElement('a');
 	pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
-	pom.setAttribute('download', "imgData.json");
+	pom.setAttribute('download', "output-" + curFilename + ".json");
 
 	if (document.createEvent) {
 		var event = document.createEvent('MouseEvents');
