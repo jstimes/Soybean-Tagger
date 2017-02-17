@@ -22,10 +22,16 @@ function getNextImage($author)
 }
 
 try {
+  if (!isset($_GET['author']))
+    throw new Exception("Missing author");
+
+  $id = getNextImage($_GET['author']);
   echo json_encode(array(
-    "next_image" => getNextImage($author)
+    "next_image" => $id,
+    "image_url" => "/api/getImage.php?id=" . $id
   ));
 } catch (Exception $e) {
+  http_response_code(500);
   echo json_encode(array(
     "errorMessage" => $e->getMessage()
   ));

@@ -5,7 +5,7 @@ error_reporting(-1);
 
 require_once 'db.php';
 
-function putData($img_id, $author, $paths, $severities)
+function putData($image_id, $author, $paths, $severities)
 {
 
   $conn = db_connect();
@@ -21,10 +21,16 @@ function putData($img_id, $author, $paths, $severities)
   $stmt->close();
 
   $stmt = $conn->prepare("INSERT INTO Severity (mark_id, disease, severity) VALUES (?, ?, ?)");
-  foreach ($severities as $disease => $sev) {
+  foreach ($severities as $kv) {
+    // get the {"1": 42} into $disease and $sev
+    // this is pretty jank
+    foreach ($kv as $disease => $sev) break;
+
     $stmt->bind_param("iii", $mark_id, $disease, $sev);
     $stmt->execute();
   }
+
+  $stmt->close();
 
   return $mark_id;
 }
@@ -38,6 +44,7 @@ try {
     "mark_id" => $mark_id
   ));
 } catch (Exception $e) {
+  http_response_code(500);
   echo json_encode(array ("errorMessage" => $e->getMessage()));
 }
 

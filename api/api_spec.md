@@ -18,4 +18,8 @@ POST upload.php
 
   -> {"mark_id": int}
 
+GET getImage.php?id=xxx -> raw image data
+
+GET addNewImages.php -> add new images in $imgdir to the Images table (will skip duplicates), meant to be opened in a web browser (has UI + preview before adding)
+
 on error, all API requests return {"errorMessage": "a potentially helpful error message"}
