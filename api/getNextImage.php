@@ -9,7 +9,7 @@ function getNextImage($author)
 {
   $conn = db_connect();
 
-  $stmt = $conn->prepare("SELECT Images.image_id FROM Images WHERE Images.image_id NOT IN (SELECT image_id FROM MarkedData WHERE author = ?) LIMIT 1");
+  $stmt = $conn->prepare("SELECT Images.image_id, Images.path FROM Images WHERE Images.image_id NOT IN (SELECT image_id FROM MarkedData WHERE author = ?) LIMIT 1");
   $stmt->bind_param("s", $author);
   $stmt->execute();
 
@@ -18,17 +18,20 @@ function getNextImage($author)
   if ($row === null)
     return -1;  // done
 
-  return $row['image_id'];
+  return array( "id" => $row['image_id'], "name" => $row['path']);
 }
 
 try {
   if (!isset($_GET['author']))
     throw new Exception("Missing author");
 
-  $id = getNextImage($_GET['author']);
+  $img = getNextImage($_GET['author']);
+  $id = $img["id"];
+  
   echo json_encode(array(
     "next_image" => $id,
-    "image_url" => "/api/getImage.php?id=" . $id
+    "image_url" => "/api/getImage.php?id=" . $id,
+	"image_name" => $img["name"]
   ));
 } catch (Exception $e) {
   http_response_code(500);
