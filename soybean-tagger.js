@@ -63,9 +63,9 @@ var DEFAULT_COLORS = [
 	"#74BAEC",
 	"#FF00FF",
 	"#CE93D8",
-	"#FF0000",
-	"#FF00FF",
-	"#AAAAAA"
+	"#FD8012",
+	"#9A5656",
+	"#57504B"
 ];
 
 //If site structure is changed, this needs to be changed
@@ -89,8 +89,6 @@ var curImageId = -1;
 var username;
 
 		
-//If you're unfamiliar with jQuery,
-// this is essentially the document.onReady callback 
 // Does initialization stuff and sets dom element event handling
 // (trying to attach events before this is called may not work)
 $( function() {
@@ -98,6 +96,9 @@ $( function() {
 	//Begins by loading image filepaths from server 
 	// Once loaded, loads first image and initializes drawing context
 	//getImageNames();
+	
+	document.documentElement.style.webkitTapHighlightColor = "rgba(0,0,0,0)";
+	document.documentElement.style.webkitTouchCallout = "none";
 	
 	getDiseases();
 
@@ -510,7 +511,7 @@ function getPathsString(){
 			return false; 
 		
 		var value = paths[key];
-		if(value.length > 0){
+		if(value && value.length > 0){
 			contentObj[key] = [];
 			for(var i=0; i<value.length; i++){
 				contentObj[key].push(value[i].pathArr);

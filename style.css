@@ -69,6 +69,11 @@
 	font-size: 36px;
 }
 
+#diseaseSeverities {
+	margin-right: 20px;
+}
 
-
+#diseaseSeverities input {
+	width: 20px;
+}
 
